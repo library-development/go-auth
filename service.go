@@ -27,26 +27,29 @@ func (s *Service) RemoveInviteToken(token string) {
 	delete(s.InviteTokens, token)
 }
 
-func (s *Service) SignUp(email, password, inviteToken string) error {
+func (s *Service) SignUp(email, password, inviteToken string) (string, error) {
 	if !s.InviteTokens[inviteToken] {
-		return errors.New("invalid invite token")
+		return "", errors.New("invalid invite token")
 	}
 	if _, ok := s.Users[email]; ok {
-		return fmt.Errorf("email already registered")
+		return "", fmt.Errorf("email already registered")
 	}
 	if err := ValidatePassword(password); err != nil {
-		return err
+		return "", err
 	}
 
 	passwordHash := HashPassword(password)
+	token := GenerateRandomToken()
 	s.Users[email] = &User{
 		PasswordHash: passwordHash,
-		Tokens:       map[string]bool{},
+		Tokens: map[string]bool{
+			token: true,
+		},
 	}
 
 	delete(s.InviteTokens, inviteToken)
 
-	return nil
+	return token, nil
 }
 
 func (s *Service) SignIn(email, password string) (string, error) {

@@ -58,10 +58,11 @@ func main() {
 					InviteToken string `json:"inviteToken"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				err := db.SignUp(input.Email, input.Password, input.InviteToken)
+				token, err := db.SignUp(input.Email, input.Password, input.InviteToken)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
+				json.NewEncoder(w).Encode(token)
 			case "/cmd/user/sign-in":
 				var input struct {
 					Email    string `json:"email"`
@@ -94,7 +95,7 @@ func main() {
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
-			case "/admin/verify-token":
+			case "/cmd/admin/verify-token":
 				var input struct {
 					Email string `json:"email"`
 					Token string `json:"token"`
