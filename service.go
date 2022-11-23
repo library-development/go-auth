@@ -43,6 +43,9 @@ func (s *Service) SignUp(email, password, inviteToken string) error {
 		PasswordHash: passwordHash,
 		Tokens:       map[string]bool{},
 	}
+
+	delete(s.InviteTokens, inviteToken)
+
 	return nil
 }
 
