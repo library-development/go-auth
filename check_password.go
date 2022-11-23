@@ -1,10 +1,12 @@
 package auth
 
-import "errors"
+import (
+	"golang.org/x/crypto/bcrypt"
+)
 
-func CheckPassword(password string) error {
-	if len(password) < 8 {
-		return errors.New("password must be at least 8 characters")
+func CheckPassword(password, hash string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return false
 	}
-	return nil
+	return true
 }

@@ -43,14 +43,25 @@ func main() {
 			defer lock.Unlock()
 			switch r.URL.Path {
 			case "/cmd/admin/add-invite-token":
-				token := db.AddInviteToken()
+				var input struct {
+					Email    string `json:"email"`
+					Password string `json:"password"`
+				}
+				json.NewDecoder(r.Body).Decode(&input)
+				token, err := db.AddInviteToken(input.Email, input.Password)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 				json.NewEncoder(w).Encode(token)
 			case "/cmd/admin/remove-invite-token":
 				var input struct {
-					Token string `json:"token"`
+					Email       string `json:"email"`
+					Password    string `json:"password"`
+					InviteToken string `json:"inviteToken"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				db.RemoveInviteToken(input.Token)
+				db.RemoveInviteToken(input.Email, input.Password, input.InviteToken)
 			case "/cmd/user/sign-up":
 				var input struct {
 					Email       string `json:"email"`
@@ -61,6 +72,7 @@ func main() {
 				token, err := db.SignUp(input.Email, input.Password, input.InviteToken)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
 				}
 				json.NewEncoder(w).Encode(token)
 			case "/cmd/user/sign-in":
@@ -72,6 +84,7 @@ func main() {
 				token, err := db.SignIn(input.Email, input.Password)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
 				}
 				json.NewEncoder(w).Encode(token)
 			case "/cmd/user/sign-out":
@@ -83,6 +96,7 @@ func main() {
 				err := db.SignOut(input.Email, input.Token)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
 				}
 			case "/cmd/user/change-password":
 				var input struct {
@@ -94,6 +108,7 @@ func main() {
 				err := db.ChangePassword(input.Email, input.Token, input.Password)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
 				}
 			case "/cmd/admin/verify-token":
 				var input struct {

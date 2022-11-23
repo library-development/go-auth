@@ -3,13 +3,12 @@ package auth
 import (
 	"errors"
 	"fmt"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
 	Users        map[string]*User `json:"users"`
 	InviteTokens map[string]bool  `json:"inviteTokens"`
+	AdminID      string           `json:"adminId"`
 }
 
 type User struct {
@@ -17,14 +16,27 @@ type User struct {
 	Tokens       map[string]bool `json:"tokens"`
 }
 
-func (s *Service) AddInviteToken() string {
+func (s *Service) AddInviteToken(email, password string) (string, error) {
+	if email != s.AdminID {
+		return "", errors.New("not admin")
+	}
+	if !CheckPassword(password, s.Users[email].PasswordHash) {
+		return "", errors.New("wrong password")
+	}
 	token := GenerateRandomToken()
 	s.InviteTokens[token] = true
-	return token
+	return token, nil
 }
 
-func (s *Service) RemoveInviteToken(token string) {
-	delete(s.InviteTokens, token)
+func (s *Service) RemoveInviteToken(email, password, inviteToken string) error {
+	if email != s.AdminID {
+		return errors.New("not admin")
+	}
+	if !CheckPassword(password, s.Users[email].PasswordHash) {
+		return errors.New("wrong password")
+	}
+	delete(s.InviteTokens, inviteToken)
+	return nil
 }
 
 func (s *Service) SignUp(email, password, inviteToken string) (string, error) {
@@ -57,7 +69,7 @@ func (s *Service) SignIn(email, password string) (string, error) {
 	if !ok {
 		return "", errors.New("email not registered")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if !CheckPassword(password, user.PasswordHash) {
 		return "", errors.New("wrong password")
 	}
 	token := GenerateRandomToken()
