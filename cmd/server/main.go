@@ -9,7 +9,7 @@ import (
 	"github.com/library-development/go-auth"
 )
 
-var db *auth.Service
+var db auth.Service
 var dataFile string
 
 func init() {
@@ -21,7 +21,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = json.Unmarshal(b, db)
+	err = json.Unmarshal(b, &db)
 	if err != nil {
 		panic(err)
 	}

@@ -8,11 +8,13 @@ import (
 )
 
 type Service struct {
-	Users map[string]*struct {
-		PasswordHash string
-		Tokens       map[string]bool
-	}
-	InviteTokens map[string]bool `json:"inviteTokens"`
+	Users        map[string]*User `json:"users"`
+	InviteTokens map[string]bool  `json:"inviteTokens"`
+}
+
+type User struct {
+	PasswordHash string          `json:"passwordHash"`
+	Tokens       map[string]bool `json:"tokens"`
 }
 
 func (s *Service) AddInviteToken() string {
@@ -37,10 +39,7 @@ func (s *Service) SignUp(email, password, inviteToken string) error {
 	}
 
 	passwordHash := HashPassword(password)
-	s.Users[email] = &struct {
-		PasswordHash string
-		Tokens       map[string]bool
-	}{
+	s.Users[email] = &User{
 		PasswordHash: passwordHash,
 		Tokens:       map[string]bool{},
 	}
