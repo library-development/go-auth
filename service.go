@@ -86,3 +86,14 @@ func (s *Service) ChangePassword(email, token, password string) error {
 	user.PasswordHash = HashPassword(password)
 	return nil
 }
+
+func (s *Service) VerifyToken(email, token string) bool {
+	user, ok := s.Users[email]
+	if !ok {
+		return false
+	}
+	if !user.Tokens[token] {
+		return false
+	}
+	return true
+}
