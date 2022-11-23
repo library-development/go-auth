@@ -16,7 +16,7 @@ type User struct {
 	Tokens       map[string]bool `json:"tokens"`
 }
 
-func (s *Service) AddInviteToken(email, token string) (string, error) {
+func (s *Service) CreateInviteToken(email, token string) (string, error) {
 	if email != s.AdminID {
 		return "", errors.New("unauthorized")
 	}

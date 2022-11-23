@@ -42,13 +42,13 @@ func main() {
 			lock.Lock()
 			defer lock.Unlock()
 			switch r.URL.Path {
-			case "/cmd/admin/add-invite-token":
+			case "/cmd/admin/create-invite-token":
 				var input struct {
 					Email string `json:"email"`
 					Token string `json:"token"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				inviteToken, err := db.AddInviteToken(input.Email, input.Token)
+				inviteToken, err := db.CreateInviteToken(input.Email, input.Token)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
