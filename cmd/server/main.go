@@ -42,34 +42,34 @@ func main() {
 			lock.Lock()
 			defer lock.Unlock()
 			switch r.URL.Path {
-			case "/cmd/admin/create-invite-token":
+			case "/cmd/admin/create-invite-code":
 				var input struct {
 					Email string `json:"email"`
-					Token string `json:"token"`
+					Code  string `json:"code"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				inviteToken, err := db.CreateInviteToken(input.Email, input.Token)
+				inviteToken, err := db.CreateInviteCode(input.Email, input.Code)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 				json.NewEncoder(w).Encode(inviteToken)
-			case "/cmd/admin/remove-invite-token":
+			case "/cmd/admin/remove-invite-code":
 				var input struct {
-					Email       string `json:"email"`
-					Token       string `json:"token"`
-					InviteToken string `json:"inviteToken"`
+					Email      string `json:"email"`
+					Token      string `json:"token"`
+					InviteCode string `json:"inviteCode"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				db.RemoveInviteToken(input.Email, input.Token, input.InviteToken)
+				db.RemoveInviteCode(input.Email, input.Token, input.InviteCode)
 			case "/cmd/user/sign-up":
 				var input struct {
-					Email       string `json:"email"`
-					Password    string `json:"password"`
-					InviteToken string `json:"inviteToken"`
+					Email      string `json:"email"`
+					Password   string `json:"password"`
+					InviteCode string `json:"inviteCode"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				token, err := db.SignUp(input.Email, input.Password, input.InviteToken)
+				token, err := db.SignUp(input.Email, input.Password, input.InviteCode)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return

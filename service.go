@@ -6,9 +6,9 @@ import (
 )
 
 type Service struct {
-	Users        map[string]*User `json:"users"`
-	InviteTokens map[string]bool  `json:"inviteTokens"` // TODO: rename to InviteCode
-	AdminID      string           `json:"adminId"`
+	Users       map[string]*User `json:"users"`
+	InviteCodes map[string]bool  `json:"inviteCodes"`
+	AdminID     string           `json:"adminId"`
 }
 
 type User struct {
@@ -16,7 +16,7 @@ type User struct {
 	Tokens       map[string]bool `json:"tokens"`
 }
 
-func (s *Service) CreateInviteToken(email, token string) (string, error) {
+func (s *Service) CreateInviteCode(email, token string) (string, error) {
 	if email != s.AdminID {
 		return "", errors.New("unauthorized")
 	}
@@ -24,24 +24,24 @@ func (s *Service) CreateInviteToken(email, token string) (string, error) {
 		return "", errors.New("unauthorized")
 	}
 	t := GenerateRandomToken()
-	s.InviteTokens[t] = true
+	s.InviteCodes[t] = true
 	return t, nil
 }
 
-func (s *Service) RemoveInviteToken(email, token, inviteToken string) error {
+func (s *Service) RemoveInviteCode(email, token, inviteCode string) error {
 	if email != s.AdminID {
 		return errors.New("unauthorized")
 	}
 	if !s.VerifyToken(email, token) {
 		return errors.New("unauthorized")
 	}
-	delete(s.InviteTokens, inviteToken)
+	delete(s.InviteCodes, inviteCode)
 	return nil
 }
 
-func (s *Service) SignUp(email, password, inviteToken string) (string, error) {
-	if !s.InviteTokens[inviteToken] {
-		return "", errors.New("invalid invite token")
+func (s *Service) SignUp(email, password, inviteCode string) (string, error) {
+	if !s.InviteCodes[inviteCode] {
+		return "", errors.New("invalid invite code")
 	}
 	if _, ok := s.Users[email]; ok {
 		return "", fmt.Errorf("email already registered")
@@ -59,7 +59,7 @@ func (s *Service) SignUp(email, password, inviteToken string) (string, error) {
 		},
 	}
 
-	delete(s.InviteTokens, inviteToken)
+	delete(s.InviteCodes, inviteCode)
 
 	return token, nil
 }
