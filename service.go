@@ -7,7 +7,7 @@ import (
 
 type Service struct {
 	Users        map[string]*User `json:"users"`
-	InviteTokens map[string]bool  `json:"inviteTokens"`
+	InviteTokens map[string]bool  `json:"inviteTokens"` // TODO: rename to InviteCode
 	AdminID      string           `json:"adminId"`
 }
 
@@ -16,24 +16,24 @@ type User struct {
 	Tokens       map[string]bool `json:"tokens"`
 }
 
-func (s *Service) AddInviteToken(email, password string) (string, error) {
+func (s *Service) AddInviteToken(email, token string) (string, error) {
 	if email != s.AdminID {
-		return "", errors.New("not admin")
+		return "", errors.New("unauthorized")
 	}
-	if !CheckPassword(password, s.Users[email].PasswordHash) {
-		return "", errors.New("wrong password")
+	if !s.VerifyToken(email, token) {
+		return "", errors.New("unauthorized")
 	}
-	token := GenerateRandomToken()
-	s.InviteTokens[token] = true
-	return token, nil
+	t := GenerateRandomToken()
+	s.InviteTokens[t] = true
+	return t, nil
 }
 
-func (s *Service) RemoveInviteToken(email, password, inviteToken string) error {
+func (s *Service) RemoveInviteToken(email, token, inviteToken string) error {
 	if email != s.AdminID {
-		return errors.New("not admin")
+		return errors.New("unauthorized")
 	}
-	if !CheckPassword(password, s.Users[email].PasswordHash) {
-		return errors.New("wrong password")
+	if !s.VerifyToken(email, token) {
+		return errors.New("unauthorized")
 	}
 	delete(s.InviteTokens, inviteToken)
 	return nil

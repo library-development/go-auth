@@ -44,24 +44,24 @@ func main() {
 			switch r.URL.Path {
 			case "/cmd/admin/add-invite-token":
 				var input struct {
-					Email    string `json:"email"`
-					Password string `json:"password"`
+					Email string `json:"email"`
+					Token string `json:"token"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				token, err := db.AddInviteToken(input.Email, input.Password)
+				inviteToken, err := db.AddInviteToken(input.Email, input.Token)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				json.NewEncoder(w).Encode(token)
+				json.NewEncoder(w).Encode(inviteToken)
 			case "/cmd/admin/remove-invite-token":
 				var input struct {
 					Email       string `json:"email"`
-					Password    string `json:"password"`
+					Token       string `json:"token"`
 					InviteToken string `json:"inviteToken"`
 				}
 				json.NewDecoder(r.Body).Decode(&input)
-				db.RemoveInviteToken(input.Email, input.Password, input.InviteToken)
+				db.RemoveInviteToken(input.Email, input.Token, input.InviteToken)
 			case "/cmd/user/sign-up":
 				var input struct {
 					Email       string `json:"email"`
