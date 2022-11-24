@@ -71,14 +71,17 @@ func (s *Service) SignUp(email, password, inviteCode string) (string, error) {
 	return token, nil
 }
 
-func (s *Service) SignIn(email, password string) (string, error) {
+func (s *Service) SignIn(email, password string) (*Credentials, error) {
 	user, ok := s.Users[email]
 	if !ok || !CheckPassword(password, user.PasswordHash) {
-		return "", fmt.Errorf("wrong username or password")
+		return nil, fmt.Errorf("wrong username or password")
 	}
 	token := GenerateRandomToken()
 	user.Tokens[token] = true
-	return token, nil
+	return &Credentials{
+		Email: email,
+		Token: token,
+	}, nil
 }
 
 func (s *Service) SignOut(creds *Credentials) error {
@@ -153,12 +156,12 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Password string `json:"password"`
 			}
 			json.NewDecoder(r.Body).Decode(&input)
-			token, err := s.SignIn(input.Email, input.Password)
+			creds, err := s.SignIn(input.Email, input.Password)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			json.NewEncoder(w).Encode(token)
+			json.NewEncoder(w).Encode(creds)
 		case "/sign-out":
 			var input struct {
 				Auth *Credentials `json:"auth"`
