@@ -190,6 +190,8 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			json.NewDecoder(r.Body).Decode(&input)
 			ok := s.VerifyToken(input.Auth)
 			json.NewEncoder(w).Encode(ok)
+		default:
+			http.Error(w, "not found", http.StatusNotFound)
 		}
 	}
 }
