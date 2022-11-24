@@ -1,14 +1,18 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"sync"
 )
 
 type Service struct {
 	Users       map[string]*User `json:"users"`
 	InviteCodes map[string]bool  `json:"inviteCodes"`
 	AdminID     string           `json:"adminId"`
+	lock        sync.Mutex
 }
 
 type User struct {
@@ -113,4 +117,89 @@ func (s *Service) VerifyToken(email, token string) bool {
 		return false
 	}
 	return true
+}
+
+func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		s.lock.Lock()
+		defer s.lock.Unlock()
+		switch r.URL.Path {
+		case "/cmd/admin/create-invite-code":
+			var input struct {
+				Email string `json:"email"`
+				Code  string `json:"code"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			inviteToken, err := s.CreateInviteCode(input.Email, input.Code)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			json.NewEncoder(w).Encode(inviteToken)
+		case "/cmd/admin/remove-invite-code":
+			var input struct {
+				Email      string `json:"email"`
+				Token      string `json:"token"`
+				InviteCode string `json:"inviteCode"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			s.RemoveInviteCode(input.Email, input.Token, input.InviteCode)
+		case "/cmd/user/sign-up":
+			var input struct {
+				Email      string `json:"email"`
+				Password   string `json:"password"`
+				InviteCode string `json:"inviteCode"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			token, err := s.SignUp(input.Email, input.Password, input.InviteCode)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			json.NewEncoder(w).Encode(token)
+		case "/cmd/user/sign-in":
+			var input struct {
+				Email    string `json:"email"`
+				Password string `json:"password"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			token, err := s.SignIn(input.Email, input.Password)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			json.NewEncoder(w).Encode(token)
+		case "/cmd/user/sign-out":
+			var input struct {
+				Email string `json:"email"`
+				Token string `json:"token"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			err := s.SignOut(input.Email, input.Token)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		case "/cmd/user/change-password":
+			var input struct {
+				Email    string `json:"email"`
+				Token    string `json:"token"`
+				Password string `json:"password"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			err := s.ChangePassword(input.Email, input.Token, input.Password)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		case "/cmd/admin/verify-token":
+			var input struct {
+				Email string `json:"email"`
+				Token string `json:"token"`
+			}
+			json.NewDecoder(r.Body).Decode(&input)
+			ok := s.VerifyToken(input.Email, input.Token)
+			json.NewEncoder(w).Encode(ok)
+		}
+	}
 }
