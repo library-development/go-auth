@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/library-development/go-auth"
 	"github.com/library-development/go-web"
@@ -34,92 +33,10 @@ func main() {
 		panic("PORT environment variable not set")
 	}
 
-	lock := sync.Mutex{}
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		web.HandleCORS(w, r)
+		db.ServeHTTP(w, r)
 		if r.Method == http.MethodPost {
-			lock.Lock()
-			defer lock.Unlock()
-			switch r.URL.Path {
-			case "/cmd/admin/create-invite-code":
-				var input struct {
-					Email string `json:"email"`
-					Code  string `json:"code"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				inviteToken, err := db.CreateInviteCode(input.Email, input.Code)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				json.NewEncoder(w).Encode(inviteToken)
-			case "/cmd/admin/remove-invite-code":
-				var input struct {
-					Email      string `json:"email"`
-					Token      string `json:"token"`
-					InviteCode string `json:"inviteCode"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				db.RemoveInviteCode(input.Email, input.Token, input.InviteCode)
-			case "/cmd/user/sign-up":
-				var input struct {
-					Email      string `json:"email"`
-					Password   string `json:"password"`
-					InviteCode string `json:"inviteCode"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				token, err := db.SignUp(input.Email, input.Password, input.InviteCode)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				json.NewEncoder(w).Encode(token)
-			case "/cmd/user/sign-in":
-				var input struct {
-					Email    string `json:"email"`
-					Password string `json:"password"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				token, err := db.SignIn(input.Email, input.Password)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				json.NewEncoder(w).Encode(token)
-			case "/cmd/user/sign-out":
-				var input struct {
-					Email string `json:"email"`
-					Token string `json:"token"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				err := db.SignOut(input.Email, input.Token)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			case "/cmd/user/change-password":
-				var input struct {
-					Email    string `json:"email"`
-					Token    string `json:"token"`
-					Password string `json:"password"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				err := db.ChangePassword(input.Email, input.Token, input.Password)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			case "/cmd/admin/verify-token":
-				var input struct {
-					Email string `json:"email"`
-					Token string `json:"token"`
-				}
-				json.NewDecoder(r.Body).Decode(&input)
-				ok := db.VerifyToken(input.Email, input.Token)
-				json.NewEncoder(w).Encode(ok)
-			}
-
 			b, err := json.Marshal(db)
 			if err != nil {
 				panic(err)
