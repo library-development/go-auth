@@ -1,9 +1,9 @@
 package auth
 
 type Client struct {
-	Endpoint string
-	UserID   string
-	Token    string
+	Endpoint string `json:"endpoint"`
+	UserID   string `json:"userId"`
+	Token    string `json:"token"`
 }
 
 // func (c *Client) AddInviteToken() (string, error) {
