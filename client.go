@@ -6,5 +6,7 @@ type Client struct {
 	Token    string `json:"token"`
 }
 
-// func (c *Client) AddInviteToken() (string, error) {
-// }
+func (c *Client) Validate(creds *Credentials) (bool, error) {
+	// TODO
+	return false, nil
+}
