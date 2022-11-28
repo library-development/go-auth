@@ -106,8 +106,12 @@ func (s *Service) ChangePassword(creds *Credentials, password string) error {
 	return nil
 }
 
-func (s *Service) VerifyToken(creds *Credentials) bool {
-	return s.UserID(creds) != ""
+func (s *Service) VerifyToken(auth *Credentials, creds *Credentials) (bool, error) {
+	if !s.IsAdmin(creds) {
+		return false, fmt.Errorf("not authorized")
+	}
+
+	return s.UserID(creds) != "", nil
 }
 
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -184,12 +188,14 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case "/admin/verify-token":
-			var input struct {
-				Auth *Credentials `json:"auth"`
-			}
+			var input VerifyTokenRequest
 			json.NewDecoder(r.Body).Decode(&input)
-			ok := s.VerifyToken(input.Auth)
-			json.NewEncoder(w).Encode(ok)
+			valid, err := s.VerifyToken(input.Auth, input.Creds)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			json.NewEncoder(w).Encode(valid)
 		default:
 			http.Error(w, "not found", http.StatusNotFound)
 		}
