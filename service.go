@@ -15,6 +15,9 @@ type Service struct {
 }
 
 func (s *Service) UserID(creds *Credentials) string {
+	if creds == nil {
+		return ""
+	}
 	user, ok := s.Users[creds.Email]
 	if !ok {
 		return ""
