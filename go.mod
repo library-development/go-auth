@@ -1,3 +1,3 @@
-module github.com/library-development/go-auth
+module lib.dev/auth
 
 go 1.19

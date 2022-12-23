@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/library-development/go-auth"
-	"github.com/library-development/go-web"
+	"lib.dev/auth"
+	"lib.dev/web"
 )
 
 var db auth.Service
